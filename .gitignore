@@ -1,1 +1,7 @@
-/.metadata/
+bin/
+build/autogen
+.DS_Store
+*~
+solutions.zip
+*.c-student
+*-src/tex/*.log
