@@ -1,0 +1,15 @@
+R1.
+To ensure that when time is Set it's not overwritten by the clock.
+R2.
+Using Acquire before changing and Release after
+R3.
+Acquire will wait until the Semaphore is avalible before proceeding with code excecution.
+R4.
+We use it to keep Data independant of the threads
+R5.
+The thread is unavalible to run.
+R6.
+By using thread.Sleep(1000) we don't consider the excecution time of the clocktick
+It can be prevented by removing a fraction of the execution time in the sleep time.
+R7.
+No clue?
