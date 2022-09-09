@@ -1,0 +1,4 @@
+a) deadlock & busy-wait
+b) race condition
+c) race condition
+d) deadlock
