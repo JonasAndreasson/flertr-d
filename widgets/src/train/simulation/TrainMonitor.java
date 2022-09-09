@@ -8,7 +8,7 @@ public class TrainMonitor {
 	public TrainMonitor() {
 		busySegments = new HashSet<>();
 	}
-	public synchronized void addBusySegment(Segment s) {
+	public void addBusySegment(Segment s) {
 		
 		busySegments.add(s);
 		s.enter();
@@ -22,7 +22,7 @@ public class TrainMonitor {
 			try {
 				wait();
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
+				 //TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
