@@ -2,3 +2,22 @@ a) deadlock & busy-wait
 b) race condition
 c) race condition
 d) deadlock
+
+R1: busy Segments
+R2: They collided and the thread crashed (threw an exception)
+R3: Monitor class where the trains could only check (and add) busy segments one at a time
+R4: before it's been marked as busy someone else has checked and seen it is free
+R5: When we call wait it will release the monitor lock. Until it gets notified where it will try and grab it again.
+R6: N<=4. Otherwise it can block 2 intersections at the same time. Train of length 4 with will work because all intersections has atleast 4 segments between intersections.
+R7: Yes. If they are traveling in opposite directions. They will both enter the intersection and block eachother. 
+R8: Because there was only one job. It was only a one threaded problem. And you don't have to syunchronzize something with itself.
+R9: 2 Threads. 1 Monitor. Synchronized pops and pushes to a stack, to know when it was free to move.
+R10: Conveyor (or the stack which controls it). When both were done at the same time it would not move. Since both would pop one item of the stack.
+R11: while Stack is not Empty wait(); and NotifyAll upon removal
+R12: It would work the same. But notify would be quicker. Since only 1 thread would be wait()ing and the other doing the notify call.
+R13:
+rc: Failing
+dl: No thread does anything
+b-w: No or only some thread(s) does anything
+R14: No. Because there's always the possiblity that inbetween the notify call and the next method that the checked resource has been modified.
+R15: No. There's always the possibility that the tester will miss something.
