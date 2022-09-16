@@ -14,6 +14,7 @@ public class LiftThread extends Thread {
 
 	public void run() {
 		while (true) {
+			
 			current = lm.getCurrent();
 			lm.updateCurrent(lm.getNext());
 			view.moveLift(current, lm.getNext());

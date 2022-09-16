@@ -9,6 +9,7 @@ public class LiftMonitor {
 	private int[] toEnter, toExit;
 	private boolean doorOpen, goingDown;
 	private LiftView lv;
+
 	public LiftMonitor(LiftView lv) {
 		this.lv = lv;
 		toEnter = new int[7];
@@ -17,16 +18,17 @@ public class LiftMonitor {
 		currentFloor = 0;
 		nextFloor = 1;
 	}
+
 	public synchronized void toEnter(int floor) {
 		toEnter[floor]++;
 	}
+
 	public synchronized void toLeave(int floor) {
 		toExit[floor]++;
 	}
-	
-	
+
 	public synchronized void waitToEnter(int floor, Passenger pass) {
-		while(floor != currentFloor || !doorOpen || numInLift == 4) {
+		while (floor != currentFloor || !doorOpen || numInLift == 4) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -37,8 +39,9 @@ public class LiftMonitor {
 		pass.enterLift();
 		notifyAll();
 	}
+
 	public synchronized void waitToLeave(int floor, Passenger pass) {
-		while(floor != currentFloor || !doorOpen) {
+		while (floor != currentFloor || !doorOpen) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -49,31 +52,39 @@ public class LiftMonitor {
 		pass.exitLift();
 		notifyAll();
 	}
+
 	public synchronized void hasEntered(int floor) {
 		toEnter[floor]--;
 		numInLift++;
 		notifyAll();
 	}
+
 	public synchronized void hasExited(int floor) {
 		toExit[floor]--;
 		numInLift--;
 		notifyAll();
 	}
-	
-	
+
 	public synchronized int getCurrent() {
 		return currentFloor;
 	}
+
 	public synchronized int getNext() {
+		
+		
 		return nextFloor;
 	}
+
 	public synchronized void open() {
-		lv.openDoors(currentFloor);
+		
+	    
+	    lv.openDoors(currentFloor);
 		notifyAll();
 		doorOpen = true;
 	}
+
 	public synchronized void close() {
-		while(toEnter[currentFloor] != 0) {
+		while (toExit[currentFloor]!=0 || (toEnter[currentFloor]!=0 && numInLift !=4)) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -81,15 +92,17 @@ public class LiftMonitor {
 				e.printStackTrace();
 			}
 		}
+		
 		doorOpen = false;
 		lv.closeDoors();
 	}
+
 	public synchronized void updateCurrent(int current) {
 		currentFloor = current;
 	}
+
 	public synchronized void pickDestination(int next) {
 		nextFloor = next;
 	}
-
 
 }

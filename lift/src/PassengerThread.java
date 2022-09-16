@@ -1,3 +1,4 @@
+
 import lift.Passenger;
 
 public class PassengerThread extends Thread {
@@ -21,5 +22,5 @@ public class PassengerThread extends Thread {
 		lm.waitToLeave(dest, pass);
 		lm.hasExited(dest);
 		pass.end();
-		}
+	}
 }
