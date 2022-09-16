@@ -14,9 +14,12 @@ public class PassengerThread extends Thread {
 
 	public void run() {
 		pass.begin();
-		lm.addPassenger(pass, source);
-		lm.removePassenger(pass, dest);
+		lm.toEnter(source);
+		lm.waitToEnter(source, pass);
+		lm.hasEntered(source);
+		lm.toLeave(dest);
+		lm.waitToLeave(dest, pass);
+		lm.hasExited(dest);
 		pass.end();
-
-	}
+		}
 }

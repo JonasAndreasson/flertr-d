@@ -6,19 +6,27 @@ import lift.Passenger;
 
 public class LiftMonitor {
 	private int currentFloor, nextFloor, numInLift;
-	private boolean openDoor;
 	private int[] toEnter, toExit;
-
-	public LiftMonitor() {
+	private boolean doorOpen, goingDown;
+	private LiftView lv;
+	public LiftMonitor(LiftView lv) {
+		this.lv = lv;
 		toEnter = new int[7];
 		toExit = new int[7];
 		numInLift = 0;
+		currentFloor = 0;
 		nextFloor = 1;
-		openDoor = false;
 	}
-
-	public synchronized void isCurrentFloor(int floor) {
-		while (currentFloor != floor && !openDoor) {
+	public synchronized void toEnter(int floor) {
+		toEnter[floor]++;
+	}
+	public synchronized void toLeave(int floor) {
+		toExit[floor]++;
+	}
+	
+	
+	public synchronized void waitToEnter(int floor, Passenger pass) {
+		while(floor != currentFloor || !doorOpen || numInLift == 4) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -26,58 +34,62 @@ public class LiftMonitor {
 				e.printStackTrace();
 			}
 		}
+		pass.enterLift();
+		notifyAll();
 	}
-
-	public synchronized void toggleDoors(LiftView v) {
-		if(toEnter[currentFloor] == 0 && toExit[currentFloor] == 0) return;
-		openDoor = !openDoor;
-		if (openDoor) {
-			v.openDoors(currentFloor);
-			notifyAll();
-		} else {
-			while (toEnter[currentFloor] != 0 || toExit[currentFloor] != 0){
-				try {
-					wait();
-					System.out.println(numInLift);
-					if (numInLift == 4) {
-						v.closeDoors();
-						return;
-					}
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+	public synchronized void waitToLeave(int floor, Passenger pass) {
+		while(floor != currentFloor || !doorOpen) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			v.closeDoors();
 		}
-
+		pass.exitLift();
+		notifyAll();
 	}
-
-	public synchronized void addPassenger(Passenger p, int floor) {
-		toEnter[floor]++;
-		isCurrentFloor(floor);
-		p.enterLift();
-		numInLift++;
+	public synchronized void hasEntered(int floor) {
 		toEnter[floor]--;
+		numInLift++;
 		notifyAll();
 	}
-
-	public synchronized void removePassenger(Passenger p, int floor) {
-		toExit[floor]++;
-		isCurrentFloor(floor);
-		p.exitLift();
-		numInLift--;
+	public synchronized void hasExited(int floor) {
 		toExit[floor]--;
+		numInLift--;
 		notifyAll();
 	}
-
-	public void setCurrentFloor(int floor) {
-		currentFloor = floor;
-		System.out.println(currentFloor);
-	}
-
-	public  int getCurrentFloor() {
+	
+	
+	public synchronized int getCurrent() {
 		return currentFloor;
 	}
+	public synchronized int getNext() {
+		return nextFloor;
+	}
+	public synchronized void open() {
+		lv.openDoors(currentFloor);
+		notifyAll();
+		doorOpen = true;
+	}
+	public synchronized void close() {
+		while(toEnter[currentFloor] != 0) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		doorOpen = false;
+		lv.closeDoors();
+	}
+	public synchronized void updateCurrent(int current) {
+		currentFloor = current;
+	}
+	public synchronized void pickDestination(int next) {
+		nextFloor = next;
+	}
+
 
 }
