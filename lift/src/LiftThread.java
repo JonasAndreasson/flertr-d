@@ -21,7 +21,7 @@ public class LiftThread extends Thread {
 			lm.open();
 			lm.close();
 			current = lm.getCurrent();
-			if (current == 0 || current == 6) {
+			if (current == 0 || current == NBR_FLOORS) {
 				goingDown = !goingDown;
 			}
 			if (goingDown) {

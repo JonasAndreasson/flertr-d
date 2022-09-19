@@ -9,7 +9,7 @@ public class LiftMonitor {
 	private int[] toEnter, toExit;
 	private boolean doorOpen, goingDown;
 	private LiftView lv;
-
+	private int passengerstack;
 	public LiftMonitor(LiftView lv) {
 		this.lv = lv;
 		toEnter = new int[7];
@@ -17,6 +17,7 @@ public class LiftMonitor {
 		numInLift = 0;
 		currentFloor = 0;
 		nextFloor = 1;
+		passengerstack=0;
 	}
 
 	public synchronized void toEnter(int floor) {
@@ -30,7 +31,8 @@ public class LiftMonitor {
 	}
 
 	public synchronized boolean waitToEnter(int floor, Passenger pass) {
-		while (floor != currentFloor || !doorOpen || numInLift == 4) {
+		 
+		while (floor != currentFloor || !doorOpen || numInLift == 4 ) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -38,8 +40,8 @@ public class LiftMonitor {
 				e.printStackTrace();
 			}
 		}
-		
-		notifyAll();
+		passengerstack++;
+		numInLift++;
 		return true;
 	}
 
@@ -53,16 +55,15 @@ public class LiftMonitor {
 			}
 		}
 		
-		notifyAll();
 		return true;
 	}
 
 	public synchronized void hasEntered(int floor) {
 		toEnter[floor]--;
-		numInLift++;
+		passengerstack--;
 		notifyAll();
 	}
-
+	
 	public synchronized void hasExited(int floor) {
 		toExit[floor]--;
 		numInLift--;
@@ -88,7 +89,7 @@ public class LiftMonitor {
 
 	public synchronized void close() {
 		if (toExit[currentFloor] == 0 && toEnter[currentFloor] == 0) return;
-		while (toExit[currentFloor] != 0 || (toEnter[currentFloor] != 0 && numInLift != 4)) {
+		while (passengerstack!=0 || toExit[currentFloor] != 0 || (toEnter[currentFloor] != 0 && numInLift != 4)) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
