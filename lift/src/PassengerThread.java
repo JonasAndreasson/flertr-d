@@ -16,10 +16,14 @@ public class PassengerThread extends Thread {
 	public void run() {
 		pass.begin();
 		lm.toEnter(source);
-		lm.waitToEnter(source, pass);
+		if(lm.waitToEnter(source, pass)) {
+			pass.enterLift();
+		}
 		lm.hasEntered(source);
 		lm.toLeave(dest);
-		lm.waitToLeave(dest, pass);
+		if(lm.waitToLeave(dest, pass)) {
+			pass.exitLift();
+		}
 		lm.hasExited(dest);
 		pass.end();
 	}

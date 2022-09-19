@@ -21,13 +21,15 @@ public class LiftMonitor {
 
 	public synchronized void toEnter(int floor) {
 		toEnter[floor]++;
+		notifyAll();
 	}
 
 	public synchronized void toLeave(int floor) {
 		toExit[floor]++;
+		
 	}
 
-	public synchronized void waitToEnter(int floor, Passenger pass) {
+	public synchronized boolean waitToEnter(int floor, Passenger pass) {
 		while (floor != currentFloor || !doorOpen || numInLift == 4) {
 			try {
 				wait();
@@ -36,11 +38,12 @@ public class LiftMonitor {
 				e.printStackTrace();
 			}
 		}
-		pass.enterLift();
+		
 		notifyAll();
+		return true;
 	}
 
-	public synchronized void waitToLeave(int floor, Passenger pass) {
+	public synchronized boolean waitToLeave(int floor, Passenger pass) {
 		while (floor != currentFloor || !doorOpen) {
 			try {
 				wait();
@@ -49,8 +52,9 @@ public class LiftMonitor {
 				e.printStackTrace();
 			}
 		}
-		pass.exitLift();
+		
 		notifyAll();
+		return true;
 	}
 
 	public synchronized void hasEntered(int floor) {
@@ -71,20 +75,20 @@ public class LiftMonitor {
 
 	public synchronized int getNext() {
 		
-		
 		return nextFloor;
 	}
 
 	public synchronized void open() {
-		
-	    
-	    lv.openDoors(currentFloor);
+		if (toExit[currentFloor] == 0 && toEnter[currentFloor] == 0) return;
+
+		lv.openDoors(currentFloor);
 		notifyAll();
 		doorOpen = true;
 	}
 
 	public synchronized void close() {
-		while (toExit[currentFloor]!=0 || (toEnter[currentFloor]!=0 && numInLift !=4)) {
+		if (toExit[currentFloor] == 0 && toEnter[currentFloor] == 0) return;
+		while (toExit[currentFloor] != 0 || (toEnter[currentFloor] != 0 && numInLift != 4)) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -92,16 +96,32 @@ public class LiftMonitor {
 				e.printStackTrace();
 			}
 		}
-		
+
 		doorOpen = false;
 		lv.closeDoors();
 	}
 
 	public synchronized void updateCurrent(int current) {
-		currentFloor = current;
-	}
+        while (true) {
+            for (int i : toEnter) {
+                for (int j : toExit) {
+                    if (i != 0 || j != 0) {
+                        currentFloor = current;
+                        return;
+                    }
+                }
+            }
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
 
 	public synchronized void pickDestination(int next) {
+		
 		nextFloor = next;
 	}
 
