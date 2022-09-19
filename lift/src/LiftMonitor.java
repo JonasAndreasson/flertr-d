@@ -10,14 +10,16 @@ public class LiftMonitor {
 	private boolean doorOpen, goingDown;
 	private LiftView lv;
 	private int passengerstack;
-	public LiftMonitor(LiftView lv) {
+	final int MAX_PASSENGERS;
+	public LiftMonitor(LiftView lv, int NBR_FLOORS, int MAX_PASSENGERS) {
 		this.lv = lv;
-		toEnter = new int[7];
-		toExit = new int[7];
 		numInLift = 0;
 		currentFloor = 0;
 		nextFloor = 1;
 		passengerstack=0;
+		this.MAX_PASSENGERS = MAX_PASSENGERS;
+		toEnter = new int[NBR_FLOORS];
+		toExit = new int[NBR_FLOORS];
 	}
 
 	public synchronized void toEnter(int floor) {
@@ -32,7 +34,7 @@ public class LiftMonitor {
 
 	public synchronized boolean waitToEnter(int floor, Passenger pass) {
 		 
-		while (floor != currentFloor || !doorOpen || numInLift == 4 ) {
+		while (floor != currentFloor || !doorOpen || numInLift == MAX_PASSENGERS ) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
@@ -89,7 +91,7 @@ public class LiftMonitor {
 
 	public synchronized void close() {
 		if (toExit[currentFloor] == 0 && toEnter[currentFloor] == 0) return;
-		while (passengerstack!=0 || toExit[currentFloor] != 0 || (toEnter[currentFloor] != 0 && numInLift != 4)) {
+		while (passengerstack!=0 || toExit[currentFloor] != 0 || (toEnter[currentFloor] != 0 && numInLift != MAX_PASSENGERS)) {
 			try {
 				wait();
 			} catch (InterruptedException e) {

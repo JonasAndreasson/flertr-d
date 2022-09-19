@@ -13,9 +13,13 @@ public class LiftThread extends Thread {
 	}
 
 	public void run() {
+		lm.updateCurrent(0); //ensure it doesn't ignore passengers if they start on ground floor
+		lm.open();
+		lm.close();
 		while (true) {
 			
 			current = lm.getCurrent();
+			
 			lm.updateCurrent(lm.getNext());
 			view.moveLift(current, lm.getNext());
 			lm.open();
