@@ -1,0 +1,11 @@
+P3
+*
+* Yes by replacing.
+* *.add(Component c)
+* *.remove();
+* *.addActionListener();
+P4
+* ProgressItem is the Progress Bar + Text
+* WorklistItem is the black box with(out) the cryptotext 
+
+I5: Running ProgressTracker in ActionListener locks the window.
