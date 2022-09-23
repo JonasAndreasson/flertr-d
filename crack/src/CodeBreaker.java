@@ -9,8 +9,10 @@ import java.util.concurrent.*;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
+import client.view.ProgressItem;
 import client.view.StatusWindow;
 import client.view.WorklistItem;
 import network.Sniffer;
@@ -67,13 +69,17 @@ public class CodeBreaker implements SnifferCallback {
         	crack.add(b);
 			workList.add(crack);
         	b.addActionListener((e)->{
-        		Container p = b.getParent();
-        		workList.remove(p);
+        		workList.remove(crack);
+        		ProgressItem p = new ProgressItem(n, message);
         		progressList.add(p);
         		pool.execute(() -> {
 					try {
-						ProgressTracker progress = new Tracker();
-						Factorizer.crack(message, n, progress);
+						ProgressTracker progress = new Tracker(p.getProgressBar());
+						String cleartext  = Factorizer.crack(message, n, progress);
+						JTextArea text = p.getTextArea();
+						text.selectAll();
+						text.replaceSelection(cleartext);
+						
 					} catch (InterruptedException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -85,6 +91,12 @@ public class CodeBreaker implements SnifferCallback {
     
     private static class Tracker implements ProgressTracker {
         private int totalProgress = 0;
+        private JProgressBar progress;
+        public Tracker(JProgressBar progress) {
+        	this.progress = progress;
+        	this.progress.setMinimum(0);
+        	this.progress.setMaximum(1000000);
+        }
 
         /**
          * Called by Factorizer to indicate progress. The total sum of
@@ -96,7 +108,7 @@ public class CodeBreaker implements SnifferCallback {
         @Override
         public void onProgress(int ppmDelta) {
             totalProgress += ppmDelta;
-            System.out.println("progress = " + totalProgress + "/1000000");
+            progress.setValue(totalProgress);
         }
     }
 }
