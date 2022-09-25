@@ -27,12 +27,14 @@ public class CodeBreaker implements SnifferCallback {
 	private BlockingQueue<Runnable> queue;
 	private Executor pool;
 	private final JProgressBar mainProgressBar;
+	private int itemCounter;
 
 	// -----------------------------------------------------------------------
 
 	private CodeBreaker() {
 		StatusWindow w = new StatusWindow();
 		w.enableErrorChecks();
+		
 		workList = w.getWorkList();
 		progressList = w.getProgressList();
 		mainProgressBar = w.getProgressBar();
@@ -62,24 +64,51 @@ public class CodeBreaker implements SnifferCallback {
 	/** Called by a Sniffer thread when an encrypted message is obtained. */
 	@Override
 	public void onMessageIntercepted(String message, BigInteger n) {
+		 
 		System.out.println("message intercepted (N=" + n + ")...");
 		SwingUtilities.invokeLater(() -> {
 			WorklistItem crack = new WorklistItem(n, message);
 			JButton b = new JButton("Crack!");
+			JButton removeTask = new JButton("Remove");
+			JButton cancelTask = new JButton("Cancel");
 			crack.add(b);
 			workList.add(crack);
 			b.addActionListener((e) -> {
 				workList.remove(crack);
 				ProgressItem p = new ProgressItem(n, message);
 				progressList.add(p);
+				itemCounter++;
+				int tempMax = mainProgressBar.getMaximum() + 1000000;
+				mainProgressBar.setMaximum(tempMax);
+				p.add(cancelTask);
+				cancelTask.addActionListener((e2)->{
+					JTextArea text1 = p.getTextArea(); //cancel task button
+					text1.selectAll();
+					text1.replaceSelection("canceled");
+				});
 				pool.execute(() -> {
 					try {
-						ProgressTracker progress = new Tracker(p.getProgressBar());
+						ProgressTracker progress = new Tracker(p.getProgressBar(), mainProgressBar, itemCounter);
 						String cleartext = Factorizer.crack(message, n, progress);
 						SwingUtilities.invokeLater(() -> {
 							JTextArea text = p.getTextArea();
 							text.selectAll();
 							text.replaceSelection(cleartext);
+							cancelTask.addActionListener((e3) -> {
+								 progressList.remove(p);
+								 itemCounter--;
+								 int tempMax2 = mainProgressBar.getMaximum() - 1000000;
+							     
+							     mainProgressBar.setMaximum(tempMax2);
+							 });
+							p.add(removeTask);
+							removeTask.addActionListener((e3) -> {
+								 progressList.remove(p);
+								 itemCounter--;
+								 int tempMax2 = mainProgressBar.getMaximum() - 1000000;
+							     
+							     mainProgressBar.setMaximum(tempMax2);
+							 });
 						});
 
 					} catch (InterruptedException e1) {
@@ -88,17 +117,29 @@ public class CodeBreaker implements SnifferCallback {
 					}
 				});
 			});
+		 
+		 
 		});
 	}
 
 	private static class Tracker implements ProgressTracker {
 		private int totalProgress = 0;
+		private int allProgress;
+		private int itemCounter = 0;
 		private JProgressBar progress;
+		private JProgressBar mainProgress;
+		private JPanel progressList;
+		
 
-		public Tracker(JProgressBar progress) {
+		public Tracker(JProgressBar progress, JProgressBar mainProgress, int itemCounter) {
 			this.progress = progress;
 			this.progress.setMinimum(0);
 			this.progress.setMaximum(1000000);
+			this.mainProgress = mainProgress;
+			this.itemCounter = itemCounter;
+			this.allProgress = mainProgress.getValue();
+			
+			
 		}
 
 		/**
@@ -110,8 +151,17 @@ public class CodeBreaker implements SnifferCallback {
 		 */
 		@Override
 		public void onProgress(int ppmDelta) {
-			totalProgress += ppmDelta;
+			totalProgress += ppmDelta; //works but not concurrently
+			if(itemCounter==1) {
+				allProgress = totalProgress;
+			}else {
+				allProgress += ppmDelta;
+			}
+			
+			SwingUtilities.invokeLater(()-> mainProgress.setValue(allProgress));
+			
 			SwingUtilities.invokeLater(() -> progress.setValue(totalProgress));
 		}
+		
 	}
 }
