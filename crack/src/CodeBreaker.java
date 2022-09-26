@@ -25,16 +25,15 @@ public class CodeBreaker implements SnifferCallback {
 	private final JPanel workList;
 	private final JPanel progressList;
 	private BlockingQueue<Runnable> queue;
-	private Executor pool;
+	private ThreadPoolExecutor pool;
 	private final JProgressBar mainProgressBar;
-	private int itemCounter;
 
 	// -----------------------------------------------------------------------
 
 	private CodeBreaker() {
 		StatusWindow w = new StatusWindow();
 		w.enableErrorChecks();
-		
+
 		workList = w.getWorkList();
 		progressList = w.getProgressList();
 		mainProgressBar = w.getProgressBar();
@@ -64,82 +63,73 @@ public class CodeBreaker implements SnifferCallback {
 	/** Called by a Sniffer thread when an encrypted message is obtained. */
 	@Override
 	public void onMessageIntercepted(String message, BigInteger n) {
-		 
+
 		System.out.println("message intercepted (N=" + n + ")...");
 		SwingUtilities.invokeLater(() -> {
 			WorklistItem crack = new WorklistItem(n, message);
-			JButton b = new JButton("Crack!");
+			JButton crackButton = new JButton("Crack!");
 			JButton removeTask = new JButton("Remove");
 			JButton cancelTask = new JButton("Cancel");
-			crack.add(b);
+			ProgressItem p = new ProgressItem(n, message);
+			crack.add(crackButton);
 			workList.add(crack);
-			b.addActionListener((e) -> {
-				workList.remove(crack);
-				ProgressItem p = new ProgressItem(n, message);
-				progressList.add(p);
-				itemCounter++;
-				int tempMax = mainProgressBar.getMaximum() + 1000000;
-				mainProgressBar.setMaximum(tempMax);
-				p.add(cancelTask);
-				cancelTask.addActionListener((e2)->{
-					JTextArea text1 = p.getTextArea(); //cancel task button
-					text1.selectAll();
-					text1.replaceSelection("canceled");
-				});
-				pool.execute(() -> {
-					try {
-						ProgressTracker progress = new Tracker(p.getProgressBar(), mainProgressBar, itemCounter);
-						String cleartext = Factorizer.crack(message, n, progress);
-						SwingUtilities.invokeLater(() -> {
-							JTextArea text = p.getTextArea();
-							text.selectAll();
-							text.replaceSelection(cleartext);
-							cancelTask.addActionListener((e3) -> {
-								 progressList.remove(p);
-								 itemCounter--;
-								 int tempMax2 = mainProgressBar.getMaximum() - 1000000;
-							     
-							     mainProgressBar.setMaximum(tempMax2);
-							 });
-							p.add(removeTask);
-							removeTask.addActionListener((e3) -> {
-								 progressList.remove(p);
-								 itemCounter--;
-								 int tempMax2 = mainProgressBar.getMaximum() - 1000000;
-							     
-							     mainProgressBar.setMaximum(tempMax2);
-							 });
-						});
 
-					} catch (InterruptedException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
+			Runnable crackTask = () -> {
+				ProgressTracker progress = new Tracker(p.getProgressBar(), mainProgressBar);
+				try {
+					String cleartext = Factorizer.crack(message, n, progress);
+					System.out.println(Thread.currentThread());
+					SwingUtilities.invokeLater(() -> {
+						JTextArea text = p.getTextArea();
+						text.selectAll();
+						text.replaceSelection(cleartext);
+						p.remove(cancelTask);
+						p.add(removeTask);
+					});
+				} catch (InterruptedException crackException) {
+					return;
+				}
+			};
+
+			crackButton.addActionListener((e) -> {
+				workList.remove(crack);
+
+				progressList.add(p);
+				Future f = pool.submit(crackTask);
+				mainProgressBar.setMaximum(mainProgressBar.getMaximum() + 1000000);
+				cancelTask.addActionListener((e3) -> {
+					SwingUtilities.invokeLater(() -> {
+						JTextArea text1 = p.getTextArea();
+						text1.selectAll();
+						text1.replaceSelection("canceled");
+						mainProgressBar.setValue(mainProgressBar.getValue() - p.getProgressBar().getValue() + 1000000);
+						p.getProgressBar().setValue(1000000);
+						f.cancel(true);
+						p.remove(cancelTask);
+						p.add(removeTask);
+					});
+
 				});
+				removeTask.addActionListener((e2) -> {
+					progressList.remove(p);
+					mainProgressBar.setValue(mainProgressBar.getValue() - p.getProgressBar().getValue());
+					mainProgressBar.setMaximum(mainProgressBar.getMaximum() - p.getProgressBar().getMaximum());
+				});
+				p.add(cancelTask);
 			});
-		 
-		 
 		});
 	}
 
 	private static class Tracker implements ProgressTracker {
 		private int totalProgress = 0;
-		private int allProgress;
-		private int itemCounter = 0;
 		private JProgressBar progress;
 		private JProgressBar mainProgress;
-		private JPanel progressList;
-		
 
-		public Tracker(JProgressBar progress, JProgressBar mainProgress, int itemCounter) {
+		public Tracker(JProgressBar progress, JProgressBar mainProgress) {
 			this.progress = progress;
 			this.progress.setMinimum(0);
 			this.progress.setMaximum(1000000);
 			this.mainProgress = mainProgress;
-			this.itemCounter = itemCounter;
-			this.allProgress = mainProgress.getValue();
-			
-			
 		}
 
 		/**
@@ -151,17 +141,12 @@ public class CodeBreaker implements SnifferCallback {
 		 */
 		@Override
 		public void onProgress(int ppmDelta) {
-			totalProgress += ppmDelta; //works but not concurrently
-			if(itemCounter==1) {
-				allProgress = totalProgress;
-			}else {
-				allProgress += ppmDelta;
-			}
-			
-			SwingUtilities.invokeLater(()-> mainProgress.setValue(allProgress));
-			
+			totalProgress += ppmDelta; // works but not concurrently
+
+			SwingUtilities.invokeLater(() -> mainProgress.setValue(mainProgress.getValue() + ppmDelta));
+
 			SwingUtilities.invokeLater(() -> progress.setValue(totalProgress));
 		}
-		
+
 	}
 }
