@@ -25,7 +25,6 @@ public class Wash {
             switch(n) {
             case 0:
             	current.interrupt();
-            	
             	break;
             case 1:
             	current = new WashingProgram1(io,temp,water,spin);
