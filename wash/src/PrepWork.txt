@@ -1,0 +1,5 @@
+P.6
+mu > 0.0478 * 10 = 0.478, we choose 0.5
+ml > 9.52 * 10^−4 * 10 = 9.52 *10^-3, we choose 0.01
+extra safety margin 0.2 degrees
+
