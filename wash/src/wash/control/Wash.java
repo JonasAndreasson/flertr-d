@@ -31,6 +31,7 @@ public class Wash {
             	current.start();
             	break;
             case 2:
+            	current = new WashingProgram2(io,temp,water,spin);
             	current.start();
             	break;
             case 3: 

@@ -37,12 +37,14 @@ public class TemperatureController extends ActorThread<WashingMessage> {
 						if (io.getTemperature() < 40 - mu10 && io.getWaterLevel() > 0) {
 							io.heat(true);
 							timer = 200;
+							ACK = 0;
 						}
 						break;
 					case TEMP_SET_60:
 						if (io.getTemperature() < 60 - mu10 && io.getWaterLevel() > 0) {
 							io.heat(true);
 							timer = 100;
+							ACK = 0;
 						}						
 						break;
 							default:
