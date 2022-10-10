@@ -78,7 +78,6 @@ public class CodeBreaker implements SnifferCallback {
 				ProgressTracker progress = new Tracker(p.getProgressBar(), mainProgressBar);
 				try {
 					String cleartext = Factorizer.crack(message, n, progress);
-					System.out.println(Thread.currentThread());
 					SwingUtilities.invokeLater(() -> {
 						JTextArea text = p.getTextArea();
 						text.selectAll();
@@ -93,18 +92,18 @@ public class CodeBreaker implements SnifferCallback {
 
 			crackButton.addActionListener((e) -> {
 				workList.remove(crack);
-
 				progressList.add(p);
 				Future f = pool.submit(crackTask);
 				mainProgressBar.setMaximum(mainProgressBar.getMaximum() + 1000000);
 				cancelTask.addActionListener((e3) -> {
+					f.cancel(true);
 					SwingUtilities.invokeLater(() -> {
 						JTextArea text1 = p.getTextArea();
 						text1.selectAll();
 						text1.replaceSelection("canceled");
-						mainProgressBar.setValue(mainProgressBar.getValue() - p.getProgressBar().getValue() + 1000000);
+						mainProgressBar.setValue(mainProgressBar.getValue() - p.getProgressBar().getValue());
 						p.getProgressBar().setValue(1000000);
-						f.cancel(true);
+						mainProgressBar.setValue(mainProgressBar.getValue() + p.getProgressBar().getValue());
 						p.remove(cancelTask);
 						p.add(removeTask);
 					});
