@@ -37,4 +37,28 @@ public class ServerTest {
 
         MessagingLog.expect(NBR_TWITS, NBR_TWITS * NBR_MESSAGES);
     }
+   // @Test // this is intense
+    void testTwitter() throws InterruptedException{
+        final int NBR_TWITS     = 700;     // number of clients
+        final int NBR_MESSAGES  = 5;     // number of messages from each client
+        final int MESSAGE_DELAY = 15;   // maximal delay between messages 
+
+        for (int i = 0; i < NBR_TWITS; i++) {
+            new Twit(NBR_MESSAGES, MESSAGE_DELAY).start();
+        }
+
+        MessagingLog.expect(NBR_TWITS, NBR_TWITS * NBR_MESSAGES);
+    }
+    @Test
+    void testFiftTwits() throws InterruptedException{
+        final int NBR_TWITS     = 50;     // number of clients
+        final int NBR_MESSAGES  = 5;     // number of messages from each client
+        final int MESSAGE_DELAY = 50;   // maximal delay between messages 
+
+        for (int i = 0; i < NBR_TWITS; i++) {
+            new Twit(NBR_MESSAGES, MESSAGE_DELAY).start();
+        }
+
+        MessagingLog.expect(NBR_TWITS, NBR_TWITS * NBR_MESSAGES);
+    }
 }
