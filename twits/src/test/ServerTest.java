@@ -52,8 +52,8 @@ public class ServerTest {
     @Test
     void testFiftTwits() throws InterruptedException{
         final int NBR_TWITS     = 50;     // number of clients
-        final int NBR_MESSAGES  = 5;     // number of messages from each client
-        final int MESSAGE_DELAY = 50;   // maximal delay between messages 
+        final int NBR_MESSAGES  = 5000;     // number of messages from each client
+        final int MESSAGE_DELAY = 100;   // maximal delay between messages 
 
         for (int i = 0; i < NBR_TWITS; i++) {
             new Twit(NBR_MESSAGES, MESSAGE_DELAY).start();

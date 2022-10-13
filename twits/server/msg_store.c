@@ -124,7 +124,7 @@ msg_store_check_for_new_topic(struct msg_store *store,
                               char **username,
                               char **text)
 {
- 
+  pthread_mutex_lock(&store->mutex); 
   bool available = any_topic_available(store, client);
   if (available) {
     list_add_int(client->message_counts, 0);
@@ -137,7 +137,7 @@ msg_store_check_for_new_topic(struct msg_store *store,
     *username = m->username;
     *text = m->text;
   }
- 
+  pthread_mutex_unlock(&store->mutex);
   return available;
 }
 
@@ -151,6 +151,7 @@ msg_store_check_for_new_message(struct msg_store *store,
                                 char **username,
                                 char **text)
 {
+  pthread_mutex_lock(&store->mutex);
   bool available = (client->current_topic_id >= 0)
                    && (client->current_topic_id < list_size(store->topics));
   if (available) {
@@ -167,6 +168,7 @@ msg_store_check_for_new_message(struct msg_store *store,
       client->nbr_read++;
     }
   }
+  pthread_mutex_unlock(&store->mutex);
   return available;
 }
 
@@ -178,6 +180,7 @@ msg_store_check_for_updated_message_count(struct msg_store *store,
                                           int *topic_id,
                                           int *message_count)
 {
+  pthread_mutex_lock(&store->mutex);
   bool available = false;
   for (int i = 0; i < list_size(client->message_counts); i++) {
     struct list *messages = list_get(store->topics, i);
@@ -190,6 +193,7 @@ msg_store_check_for_updated_message_count(struct msg_store *store,
       break;
     }
   }
+  pthread_mutex_unlock(&store->mutex);
   return available;
 }
 
@@ -217,10 +221,10 @@ void
 msg_store_init_client(struct msg_store *store,
                       struct client_state *client)
 {
-
+  pthread_mutex_lock(&store->mutex);
   client->current_topic_id = TOPIC_STATE_NO_TOPIC;
   client->message_counts = list_create();
-
+  pthread_mutex_unlock(&store->mutex);
 }
 
 // ----------------------------------------------------------------------------
